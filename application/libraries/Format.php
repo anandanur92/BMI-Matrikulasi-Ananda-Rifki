@@ -1,6 +1,6 @@
 <?php
-// Note, this cannot be namespaced for the time being due to how CI works
-//namespace Restserver\Libraries;
+namespace Restserver\Libraries;
+use Exception;
 
 defined('BASEPATH') OR exit('No direct script access allowed');
 
@@ -116,7 +116,7 @@ class Format {
      *
      * @return object Instance of the format class
      */
-    public function factory($data, $from_type = NULL)
+    public static function factory($data, $from_type = NULL)
     {
         // $class = __CLASS__;
         // return new $class();
@@ -381,6 +381,9 @@ class Format {
         // Close the handle
         fclose($handle);
 
+        // Convert UTF-8 encoding to UTF-16LE which is supported by MS Excel
+        $csv = mb_convert_encoding($csv, 'UTF-16LE', 'UTF-8');
+
         return $csv;
     }
 
@@ -405,21 +408,21 @@ class Format {
 
         if (empty($callback) === TRUE)
         {
-            return json_encode($data);
+            return json_encode($data, JSON_UNESCAPED_UNICODE);
         }
 
         // We only honour a jsonp callback which are valid javascript identifiers
         elseif (preg_match('/^[a-z_\$][a-z0-9\$_]*(\.[a-z_\$][a-z0-9\$_]*)*$/i', $callback))
         {
             // Return the data as encoded json with a callback
-            return $callback.'('.json_encode($data).');';
+            return $callback.'('.json_encode($data, JSON_UNESCAPED_UNICODE).');';
         }
 
         // An invalid jsonp callback function provided.
         // Though I don't believe this should be hardcoded here
         $data['warning'] = 'INVALID JSONP CALLBACK: '.$callback;
 
-        return json_encode($data);
+        return json_encode($data, JSON_UNESCAPED_UNICODE);
     }
 
     /**
